@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package pdns
 
 import (
 	"bytes"
@@ -32,6 +32,8 @@ import (
 	pgo "github.com/ffledgling/pdns-go"
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 type pdnsChangeType string
@@ -150,8 +152,8 @@ type PDNSProvider struct {
 	client PDNSAPIProvider
 }
 
-// NewPDNSProvider initializes a new PowerDNS based Provider.
-func NewPDNSProvider(server string, apikey string, domainFilter DomainFilter, dryRun bool) (*PDNSProvider, error) {
+// NewProvider initializes a new PowerDNS based Provider.
+func NewProvider(server string, apikey string, domainFilter DomainFilter, dryRun bool) (*PDNSProvider, error) {
 
 	// Do some input validation
 
@@ -160,7 +162,7 @@ func NewPDNSProvider(server string, apikey string, domainFilter DomainFilter, dr
 	}
 
 	// The default for when no --domain-filter is passed is [""], instead of [], so we check accordingly.
-	if len(domainFilter.filters) != 1 && domainFilter.filters[0] != "" {
+	if len(domainFilter.Filters) != 1 && domainFilter.Filters[0] != "" {
 		return nil, errors.New("PDNS Provider does not support domain filter")
 	}
 	// We do not support dry running, exit safely instead of surprising the user
@@ -236,7 +238,7 @@ func (p *PDNSProvider) ConvertEndpointsToZones(eps []*endpoint.Endpoint, changet
 		zone.Rrsets = []pgo.RrSet{}
 		for i := 0; i < len(endpoints); {
 			ep := endpoints[i]
-			dnsname := ensureTrailingDot(ep.DNSName)
+			dnsname := EnsureTrailingDot(ep.DNSName)
 			if strings.HasSuffix(dnsname, zone.Name) {
 				// The assumption here is that there will only ever be one target
 				// per (ep.DNSName, ep.RecordType) tuple, which holds true for

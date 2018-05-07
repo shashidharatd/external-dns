@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package infoblox
 
 import (
 	"encoding/base64"
@@ -27,6 +27,8 @@ import (
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
 	"github.com/stretchr/testify/assert"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 type mockIBConnector struct {
@@ -367,7 +369,7 @@ func TestInfobloxRecords(t *testing.T) {
 		endpoint.NewEndpoint("whitespace.example.com", endpoint.RecordTypeTXT, "\"heritage=external-dns,external-dns/owner=white space\""),
 		endpoint.NewEndpoint("hack.example.com", endpoint.RecordTypeCNAME, "cerberus.infoblox.com"),
 	}
-	validateEndpoints(t, actual, expected)
+	ValidateEndpoints(t, actual, expected)
 }
 
 func TestInfobloxApplyChanges(t *testing.T) {
@@ -375,7 +377,7 @@ func TestInfobloxApplyChanges(t *testing.T) {
 
 	testInfobloxApplyChangesInternal(t, false, &client)
 
-	validateEndpoints(t, client.createdEndpoints, []*endpoint.Endpoint{
+	ValidateEndpoints(t, client.createdEndpoints, []*endpoint.Endpoint{
 		endpoint.NewEndpoint("example.com", endpoint.RecordTypeA, "1.2.3.4"),
 		endpoint.NewEndpoint("example.com", endpoint.RecordTypeTXT, "tag"),
 		endpoint.NewEndpoint("foo.example.com", endpoint.RecordTypeA, "1.2.3.4"),
@@ -388,14 +390,14 @@ func TestInfobloxApplyChanges(t *testing.T) {
 		endpoint.NewEndpoint("newcname.example.com", endpoint.RecordTypeCNAME, "other.com"),
 	})
 
-	validateEndpoints(t, client.deletedEndpoints, []*endpoint.Endpoint{
+	ValidateEndpoints(t, client.deletedEndpoints, []*endpoint.Endpoint{
 		endpoint.NewEndpoint("old.example.com", endpoint.RecordTypeA, ""),
 		endpoint.NewEndpoint("oldcname.example.com", endpoint.RecordTypeCNAME, ""),
 		endpoint.NewEndpoint("deleted.example.com", endpoint.RecordTypeA, ""),
 		endpoint.NewEndpoint("deletedcname.example.com", endpoint.RecordTypeCNAME, ""),
 	})
 
-	validateEndpoints(t, client.updatedEndpoints, []*endpoint.Endpoint{})
+	ValidateEndpoints(t, client.updatedEndpoints, []*endpoint.Endpoint{})
 }
 
 func TestInfobloxApplyChangesDryRun(t *testing.T) {
@@ -405,11 +407,11 @@ func TestInfobloxApplyChangesDryRun(t *testing.T) {
 
 	testInfobloxApplyChangesInternal(t, true, &client)
 
-	validateEndpoints(t, client.createdEndpoints, []*endpoint.Endpoint{})
+	ValidateEndpoints(t, client.createdEndpoints, []*endpoint.Endpoint{})
 
-	validateEndpoints(t, client.deletedEndpoints, []*endpoint.Endpoint{})
+	ValidateEndpoints(t, client.deletedEndpoints, []*endpoint.Endpoint{})
 
-	validateEndpoints(t, client.updatedEndpoints, []*endpoint.Endpoint{})
+	ValidateEndpoints(t, client.updatedEndpoints, []*endpoint.Endpoint{})
 }
 
 func testInfobloxApplyChangesInternal(t *testing.T, dryRun bool, client ibclient.IBConnector) {

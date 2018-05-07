@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package inmemory
 
 import (
 	"testing"
@@ -25,6 +25,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 var (
@@ -36,7 +38,7 @@ func TestInMemoryProvider(t *testing.T) {
 	t.Run("Records", testInMemoryRecords)
 	t.Run("validateChangeBatch", testInMemoryValidateChangeBatch)
 	t.Run("ApplyChanges", testInMemoryApplyChanges)
-	t.Run("NewInMemoryProvider", testNewInMemoryProvider)
+	t.Run("NewProvider", testNewInMemoryProvider)
 	t.Run("CreateZone", testInMemoryCreateZone)
 }
 
@@ -205,7 +207,7 @@ func testInMemoryRecords(t *testing.T) {
 		t.Run(ti.title, func(t *testing.T) {
 			c := newInMemoryClient()
 			c.zones = ti.init
-			im := NewInMemoryProvider()
+			im := NewProvider()
 			im.client = c
 			f := filter{domain: ti.zone}
 			im.filter = &f
@@ -768,7 +770,7 @@ func testInMemoryApplyChanges(t *testing.T) {
 	} {
 		t.Run(ti.title, func(t *testing.T) {
 
-			im := NewInMemoryProvider()
+			im := NewProvider()
 			c := &inMemoryClient{}
 			c.zones = getInitData()
 			im.client = c
@@ -785,12 +787,12 @@ func testInMemoryApplyChanges(t *testing.T) {
 }
 
 func testNewInMemoryProvider(t *testing.T) {
-	cfg := NewInMemoryProvider()
+	cfg := NewProvider()
 	assert.NotNil(t, cfg.client)
 }
 
 func testInMemoryCreateZone(t *testing.T) {
-	im := NewInMemoryProvider()
+	im := NewProvider()
 	err := im.CreateZone("zone")
 	assert.NoError(t, err)
 	err = im.CreateZone("zone")

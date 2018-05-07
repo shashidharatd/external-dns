@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package dnsimple
 
 import (
 	"fmt"
@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 var mockProvider dnsimpleProvider
@@ -176,7 +178,7 @@ func testDnsimpleSuitableZone(t *testing.T) {
 
 func TestNewDnsimpleProvider(t *testing.T) {
 	os.Setenv("DNSIMPLE_OAUTH", "xxxxxxxxxxxxxxxxxxxxxxxxxx")
-	_, err := NewDnsimpleProvider(NewDomainFilter([]string{"example.com"}), NewZoneIDFilter([]string{""}), true)
+	_, err := NewProvider(NewDomainFilter([]string{"example.com"}), NewZoneIDFilter([]string{""}), true)
 	if err == nil {
 		t.Errorf("Expected to fail new provider on bad token")
 	}

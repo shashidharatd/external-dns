@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package cloudflare
 
 import (
 	"fmt"
@@ -26,6 +26,8 @@ import (
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
@@ -103,8 +105,8 @@ type cloudFlareChange struct {
 	ResourceRecordSet cloudflare.DNSRecord
 }
 
-// NewCloudFlareProvider initializes a new CloudFlare DNS based Provider.
-func NewCloudFlareProvider(domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, proxied bool, dryRun bool) (*CloudFlareProvider, error) {
+// NewProvider initializes a new CloudFlare DNS based Provider.
+func NewProvider(domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, proxied bool, dryRun bool) (*CloudFlareProvider, error) {
 	// initialize via API email and API key and returns new API object
 	config, err := cloudflare.New(os.Getenv("CF_API_KEY"), os.Getenv("CF_API_EMAIL"))
 	if err != nil {
@@ -160,7 +162,7 @@ func (p *CloudFlareProvider) Records() ([]*endpoint.Endpoint, error) {
 		}
 
 		for _, r := range records {
-			if supportedRecordType(r.Type) {
+			if SupportedRecordType(r.Type) {
 				endpoints = append(endpoints, endpoint.NewEndpoint(r.Name, r.Type, r.Content))
 			}
 		}
@@ -238,7 +240,7 @@ func (p *CloudFlareProvider) submitChanges(changes []*cloudFlareChange) error {
 // changesByZone separates a multi-zone change into a single change per zone.
 func (p *CloudFlareProvider) changesByZone(zones []cloudflare.Zone, changeSet []*cloudFlareChange) map[string][]*cloudFlareChange {
 	changes := make(map[string][]*cloudFlareChange)
-	zoneNameIDMapper := zoneIDName{}
+	zoneNameIDMapper := ZoneIDName{}
 
 	for _, z := range zones {
 		zoneNameIDMapper.Add(z.ID, z.Name)

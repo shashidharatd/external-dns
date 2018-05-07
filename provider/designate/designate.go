@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package designate
 
 import (
 	"fmt"
@@ -34,6 +34,8 @@ import (
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/pkg/tlsutils"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
@@ -228,8 +230,8 @@ type designateProvider struct {
 	dryRun       bool
 }
 
-// NewDesignateProvider is a factory function for OpenStack designate providers
-func NewDesignateProvider(domainFilter DomainFilter, dryRun bool) (Provider, error) {
+// NewProvider is a factory function for OpenStack designate providers
+func NewProvider(domainFilter DomainFilter, dryRun bool) (Provider, error) {
 	client, err := newDesignateClient()
 	if err != nil {
 		return nil, err

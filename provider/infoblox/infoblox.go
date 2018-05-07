@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package infoblox
 
 import (
 	"os"
@@ -25,10 +25,12 @@ import (
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
 	"github.com/sirupsen/logrus"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
-// InfobloxConfig clarifies the method signature
-type InfobloxConfig struct {
+// Config clarifies the method signature
+type Config struct {
 	DomainFilter DomainFilter
 	ZoneIDFilter ZoneIDFilter
 	Host         string
@@ -53,8 +55,8 @@ type infobloxRecordSet struct {
 	res interface{}
 }
 
-// NewInfobloxProvider creates a new Infoblox provider.
-func NewInfobloxProvider(infobloxConfig InfobloxConfig) (*InfobloxProvider, error) {
+// NewProvider creates a new Infoblox provider.
+func NewProvider(infobloxConfig Config) (*InfobloxProvider, error) {
 	hostConfig := ibclient.HostConfig{
 		Host:     infobloxConfig.Host,
 		Port:     strconv.Itoa(infobloxConfig.Port),

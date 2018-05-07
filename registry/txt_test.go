@@ -22,7 +22,7 @@ import (
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/internal/testutils"
 	"github.com/kubernetes-incubator/external-dns/plan"
-	"github.com/kubernetes-incubator/external-dns/provider"
+	"github.com/kubernetes-incubator/external-dns/provider/inmemory"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +39,7 @@ func TestTXTRegistry(t *testing.T) {
 }
 
 func testTXTRegistryNew(t *testing.T) {
-	p := provider.NewInMemoryProvider()
+	p := inmemory.NewProvider()
 	_, err := NewTXTRegistry(p, "txt", "")
 	require.Error(t, err)
 
@@ -64,7 +64,7 @@ func testTXTRegistryRecords(t *testing.T) {
 }
 
 func testTXTRegistryRecordsPrefixed(t *testing.T) {
-	p := provider.NewInMemoryProvider()
+	p := inmemory.NewProvider()
 	p.CreateZone(testZone)
 	p.ApplyChanges(&plan.Changes{
 		Create: []*endpoint.Endpoint{
@@ -137,7 +137,7 @@ func testTXTRegistryRecordsPrefixed(t *testing.T) {
 }
 
 func testTXTRegistryRecordsNoPrefix(t *testing.T) {
-	p := provider.NewInMemoryProvider()
+	p := inmemory.NewProvider()
 	p.CreateZone(testZone)
 	p.ApplyChanges(&plan.Changes{
 		Create: []*endpoint.Endpoint{
@@ -216,7 +216,7 @@ func testTXTRegistryApplyChanges(t *testing.T) {
 }
 
 func testTXTRegistryApplyChangesWithPrefix(t *testing.T) {
-	p := provider.NewInMemoryProvider()
+	p := inmemory.NewProvider()
 	p.CreateZone(testZone)
 	p.ApplyChanges(&plan.Changes{
 		Create: []*endpoint.Endpoint{
@@ -285,7 +285,7 @@ func testTXTRegistryApplyChangesWithPrefix(t *testing.T) {
 }
 
 func testTXTRegistryApplyChangesNoPrefix(t *testing.T) {
-	p := provider.NewInMemoryProvider()
+	p := inmemory.NewProvider()
 	p.CreateZone(testZone)
 	p.ApplyChanges(&plan.Changes{
 		Create: []*endpoint.Endpoint{

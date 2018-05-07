@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package azure
 
 import (
 	"fmt"
@@ -33,6 +33,8 @@ import (
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
@@ -73,10 +75,10 @@ type AzureProvider struct {
 	recordsClient RecordsClient
 }
 
-// NewAzureProvider creates a new Azure provider.
+// NewProvider creates a new Azure provider.
 //
 // Returns the provider or an error if a provider could not be created.
-func NewAzureProvider(configFile string, domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, resourceGroup string, dryRun bool) (*AzureProvider, error) {
+func NewProvider(configFile string, domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, resourceGroup string, dryRun bool) (*AzureProvider, error) {
 	contents, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Azure config file '%s': %v", configFile, err)
@@ -144,7 +146,7 @@ func (p *AzureProvider) Records() (endpoints []*endpoint.Endpoint, _ error) {
 				return true
 			}
 			recordType := strings.TrimLeft(*recordSet.Type, "Microsoft.Network/dnszones/")
-			if !supportedRecordType(recordType) {
+			if !SupportedRecordType(recordType) {
 				return true
 			}
 			name := formatAzureDNSName(*recordSet.Name, *zone.Name)
@@ -254,7 +256,7 @@ func (p *AzureProvider) mapChanges(zones []dns.Zone, changes *plan.Changes) (azu
 	ignored := map[string]bool{}
 	deleted := azureChangeMap{}
 	updated := azureChangeMap{}
-	zoneNameIDMapper := zoneIDName{}
+	zoneNameIDMapper := ZoneIDName{}
 	for _, z := range zones {
 		if z.Name != nil {
 			zoneNameIDMapper.Add(*z.Name, *z.Name)

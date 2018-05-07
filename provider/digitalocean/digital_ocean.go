@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package digitalocean
 
 import (
 	"fmt"
@@ -29,6 +29,8 @@ import (
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
@@ -54,8 +56,8 @@ type DigitalOceanChange struct {
 	ResourceRecordSet godo.DomainRecord
 }
 
-// NewDigitalOceanProvider initializes a new DigitalOcean DNS based Provider.
-func NewDigitalOceanProvider(domainFilter DomainFilter, dryRun bool) (*DigitalOceanProvider, error) {
+// NewProvider initializes a new DigitalOcean DNS based Provider.
+func NewProvider(domainFilter DomainFilter, dryRun bool) (*DigitalOceanProvider, error) {
 	token, ok := os.LookupEnv("DO_TOKEN")
 	if !ok {
 		return nil, fmt.Errorf("No token found")
@@ -105,7 +107,7 @@ func (p *DigitalOceanProvider) Records() ([]*endpoint.Endpoint, error) {
 		}
 
 		for _, r := range records {
-			if supportedRecordType(r.Type) {
+			if SupportedRecordType(r.Type) {
 				name := r.Name + "." + zone.Name
 
 				// root name is identified by @ and should be
@@ -296,7 +298,7 @@ func (p *DigitalOceanProvider) getRecordID(records []godo.DomainRecord, record g
 // digitalOceanchangesByZone separates a multi-zone change into a single change per zone.
 func digitalOceanChangesByZone(zones []godo.Domain, changeSet []*DigitalOceanChange) map[string][]*DigitalOceanChange {
 	changes := make(map[string][]*DigitalOceanChange)
-	zoneNameIDMapper := zoneIDName{}
+	zoneNameIDMapper := ZoneIDName{}
 	for _, z := range zones {
 		zoneNameIDMapper.Add(z.Name, z.Name)
 		changes[z.Name] = []*DigitalOceanChange{}

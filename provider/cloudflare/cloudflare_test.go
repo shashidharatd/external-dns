@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package cloudflare
 
 import (
 	"fmt"
@@ -28,6 +28,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 type mockCloudFlareClient struct{}
@@ -416,13 +418,13 @@ func TestRecords(t *testing.T) {
 func TestNewCloudFlareProvider(t *testing.T) {
 	_ = os.Setenv("CF_API_KEY", "xxxxxxxxxxxxxxxxx")
 	_ = os.Setenv("CF_API_EMAIL", "test@test.com")
-	_, err := NewCloudFlareProvider(NewDomainFilter([]string{"ext-dns-test.zalando.to."}), NewZoneIDFilter([]string{""}), false, true)
+	_, err := NewProvider(NewDomainFilter([]string{"ext-dns-test.zalando.to."}), NewZoneIDFilter([]string{""}), false, true)
 	if err != nil {
 		t.Errorf("should not fail, %s", err)
 	}
 	_ = os.Unsetenv("CF_API_KEY")
 	_ = os.Unsetenv("CF_API_EMAIL")
-	_, err = NewCloudFlareProvider(NewDomainFilter([]string{"ext-dns-test.zalando.to."}), NewZoneIDFilter([]string{""}), false, true)
+	_, err = NewProvider(NewDomainFilter([]string{"ext-dns-test.zalando.to."}), NewZoneIDFilter([]string{""}), false, true)
 	if err == nil {
 		t.Errorf("expected to fail")
 	}

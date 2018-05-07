@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package inmemory
 
 import (
 	"errors"
@@ -24,6 +24,8 @@ import (
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 var (
@@ -52,8 +54,8 @@ type InMemoryProvider struct {
 // InMemoryOption allows to extend in-memory provider
 type InMemoryOption func(*InMemoryProvider)
 
-// InMemoryWithLogging injects logging when ApplyChanges is called
-func InMemoryWithLogging() InMemoryOption {
+// WithLogging injects logging when ApplyChanges is called
+func WithLogging() InMemoryOption {
 	return func(p *InMemoryProvider) {
 		p.OnApplyChanges = func(changes *plan.Changes) {
 			for _, v := range changes.Create {
@@ -72,15 +74,15 @@ func InMemoryWithLogging() InMemoryOption {
 	}
 }
 
-// InMemoryWithDomain modifies the domain on which dns zones are filtered
-func InMemoryWithDomain(domainFilter DomainFilter) InMemoryOption {
+// WithDomain modifies the domain on which dns zones are filtered
+func WithDomain(domainFilter DomainFilter) InMemoryOption {
 	return func(p *InMemoryProvider) {
 		p.domain = domainFilter
 	}
 }
 
-// InMemoryInitZones pre-seeds the InMemoryProvider with given zones
-func InMemoryInitZones(zones []string) InMemoryOption {
+// InitZones pre-seeds the InMemoryProvider with given zones
+func InitZones(zones []string) InMemoryOption {
 	return func(p *InMemoryProvider) {
 		for _, z := range zones {
 			if err := p.CreateZone(z); err != nil {
@@ -90,8 +92,8 @@ func InMemoryInitZones(zones []string) InMemoryOption {
 	}
 }
 
-// NewInMemoryProvider returns InMemoryProvider DNS provider interface implementation
-func NewInMemoryProvider(opts ...InMemoryOption) *InMemoryProvider {
+// NewProvider returns InMemoryProvider DNS provider interface implementation
+func NewProvider(opts ...InMemoryOption) *InMemoryProvider {
 	im := &InMemoryProvider{
 		filter:         &filter{},
 		OnApplyChanges: func(changes *plan.Changes) {},

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package google
 
 import (
 	"fmt"
@@ -33,6 +33,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 var (
@@ -217,7 +219,7 @@ func TestGoogleRecords(t *testing.T) {
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, originalEndpoints)
+	ValidateEndpoints(t, records, originalEndpoints)
 }
 
 func TestGoogleRecordsFilter(t *testing.T) {
@@ -261,7 +263,7 @@ func TestGoogleRecordsFilter(t *testing.T) {
 	require.NoError(t, err)
 
 	// assert that due to filtering no changes were made.
-	validateEndpoints(t, records, originalEndpoints)
+	ValidateEndpoints(t, records, originalEndpoints)
 }
 
 func TestGoogleCreateRecords(t *testing.T) {
@@ -278,7 +280,7 @@ func TestGoogleCreateRecords(t *testing.T) {
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, []*endpoint.Endpoint{
+	ValidateEndpoints(t, records, []*endpoint.Endpoint{
 		endpoint.NewEndpoint("create-test.zone-1.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "1.2.3.4"),
 		endpoint.NewEndpoint("create-test.zone-2.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "8.8.8.8"),
 		endpoint.NewEndpoint("create-test-cname.zone-1.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeCNAME, "foo.elb.amazonaws.com"),
@@ -308,7 +310,7 @@ func TestGoogleUpdateRecords(t *testing.T) {
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, []*endpoint.Endpoint{
+	ValidateEndpoints(t, records, []*endpoint.Endpoint{
 		endpoint.NewEndpoint("update-test.zone-1.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "1.2.3.4"),
 		endpoint.NewEndpoint("update-test.zone-2.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "4.3.2.1"),
 		endpoint.NewEndpoint("update-test-cname.zone-1.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeCNAME, "bar.elb.amazonaws.com"),
@@ -329,7 +331,7 @@ func TestGoogleDeleteRecords(t *testing.T) {
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, []*endpoint.Endpoint{})
+	ValidateEndpoints(t, records, []*endpoint.Endpoint{})
 }
 
 func TestGoogleApplyChanges(t *testing.T) {
@@ -397,7 +399,7 @@ func TestGoogleApplyChanges(t *testing.T) {
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, []*endpoint.Endpoint{
+	ValidateEndpoints(t, records, []*endpoint.Endpoint{
 		endpoint.NewEndpoint("create-test.zone-1.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "8.8.8.8"),
 		endpoint.NewEndpoint("update-test.zone-1.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "1.2.3.4"),
 		endpoint.NewEndpoint("create-test.zone-2.ext-dns-test-2.gcp.zalan.do", endpoint.RecordTypeA, "8.8.4.4"),
@@ -454,7 +456,7 @@ func TestGoogleApplyChangesDryRun(t *testing.T) {
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, originalEndpoints)
+	ValidateEndpoints(t, records, originalEndpoints)
 }
 
 func TestGoogleApplyChangesEmpty(t *testing.T) {
@@ -624,14 +626,14 @@ func setupGoogleRecords(t *testing.T, provider *GoogleProvider, endpoints []*end
 	records, err := provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, []*endpoint.Endpoint{})
+	ValidateEndpoints(t, records, []*endpoint.Endpoint{})
 
 	require.NoError(t, provider.CreateRecords(endpoints))
 
 	records, err = provider.Records()
 	require.NoError(t, err)
 
-	validateEndpoints(t, records, endpoints)
+	ValidateEndpoints(t, records, endpoints)
 }
 
 func clearGoogleRecords(t *testing.T, provider *GoogleProvider, zone string) {

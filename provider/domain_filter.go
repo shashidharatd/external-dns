@@ -22,7 +22,7 @@ import (
 
 // DomainFilter holds a lists of valid domain names
 type DomainFilter struct {
-	filters []string
+	Filters []string
 }
 
 // NewDomainFilter returns a new DomainFilter given a comma separated list of domains
@@ -41,11 +41,11 @@ func NewDomainFilter(domainFilters []string) DomainFilter {
 // Match checks whether a domain can be found in the DomainFilter.
 func (df DomainFilter) Match(domain string) bool {
 	// return always true, if not filter is specified
-	if len(df.filters) == 0 {
+	if len(df.Filters) == 0 {
 		return true
 	}
 
-	for _, filter := range df.filters {
+	for _, filter := range df.Filters {
 
 		if strings.HasSuffix(strings.TrimSuffix(domain, "."), filter) {
 			return true
@@ -57,8 +57,8 @@ func (df DomainFilter) Match(domain string) bool {
 
 // IsConfigured returns true if DomainFilter is configured, false otherwise
 func (df DomainFilter) IsConfigured() bool {
-	if len(df.filters) == 1 {
-		return df.filters[0] != ""
+	if len(df.Filters) == 1 {
+		return df.Filters[0] != ""
 	}
-	return len(df.filters) > 0
+	return len(df.Filters) > 0
 }

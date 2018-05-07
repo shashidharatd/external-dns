@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package aws
 
 import (
 	"sort"
@@ -28,11 +28,12 @@ import (
 	"github.com/kubernetes-incubator/external-dns/plan"
 	"github.com/linki/instrumented_http"
 	log "github.com/sirupsen/logrus"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
 	evaluateTargetHealth = true
-	recordTTL            = 300
 	maxChangeCount       = 4000
 )
 
@@ -96,8 +97,8 @@ type AWSProvider struct {
 	zoneTypeFilter ZoneTypeFilter
 }
 
-// NewAWSProvider initializes a new AWS Route53 based Provider.
-func NewAWSProvider(domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, zoneTypeFilter ZoneTypeFilter, assumeRole string, dryRun bool) (*AWSProvider, error) {
+// NewProvider initializes a new AWS Route53 based Provider.
+func NewProvider(domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, zoneTypeFilter ZoneTypeFilter, assumeRole string, dryRun bool) (*AWSProvider, error) {
 	config := aws.NewConfig()
 
 	config.WithHTTPClient(
@@ -190,7 +191,7 @@ func (p *AWSProvider) Records() (endpoints []*endpoint.Endpoint, _ error) {
 			// TODO(linki, ownership): Remove once ownership system is in place.
 			// See: https://github.com/kubernetes-incubator/external-dns/pull/122/files/74e2c3d3e237411e619aefc5aab694742001cdec#r109863370
 
-			if !supportedRecordType(aws.StringValue(r.Type)) {
+			if !SupportedRecordType(aws.StringValue(r.Type)) {
 				continue
 			}
 
@@ -358,7 +359,7 @@ func changesByZone(zones map[string]*route53.HostedZone, changeSet []*route53.Ch
 	}
 
 	for _, c := range changeSet {
-		hostname := ensureTrailingDot(aws.StringValue(c.ResourceRecordSet.Name))
+		hostname := EnsureTrailingDot(aws.StringValue(c.ResourceRecordSet.Name))
 
 		zones := suitableZones(hostname, zones)
 		if len(zones) == 0 {
@@ -413,7 +414,7 @@ func newChange(action string, endpoint *endpoint.Endpoint) *route53.Change {
 	} else {
 		change.ResourceRecordSet.Type = aws.String(endpoint.RecordType)
 		if !endpoint.RecordTTL.IsConfigured() {
-			change.ResourceRecordSet.TTL = aws.Int64(recordTTL)
+			change.ResourceRecordSet.TTL = aws.Int64(RecordTTL)
 		} else {
 			change.ResourceRecordSet.TTL = aws.Int64(int64(endpoint.RecordTTL))
 		}

@@ -34,6 +34,18 @@ import (
 	"github.com/kubernetes-incubator/external-dns/provider"
 	"github.com/kubernetes-incubator/external-dns/registry"
 	"github.com/kubernetes-incubator/external-dns/source"
+
+	"github.com/kubernetes-incubator/external-dns/provider/aws"
+	"github.com/kubernetes-incubator/external-dns/provider/azure"
+	"github.com/kubernetes-incubator/external-dns/provider/cloudflare"
+	"github.com/kubernetes-incubator/external-dns/provider/designate"
+	"github.com/kubernetes-incubator/external-dns/provider/digitalocean"
+	"github.com/kubernetes-incubator/external-dns/provider/dnsimple"
+	"github.com/kubernetes-incubator/external-dns/provider/dyn"
+	"github.com/kubernetes-incubator/external-dns/provider/google"
+	"github.com/kubernetes-incubator/external-dns/provider/infoblox"
+	"github.com/kubernetes-incubator/external-dns/provider/inmemory"
+	"github.com/kubernetes-incubator/external-dns/provider/pdns"
 )
 
 func main() {
@@ -94,20 +106,20 @@ func main() {
 	var p provider.Provider
 	switch cfg.Provider {
 	case "aws":
-		p, err = provider.NewAWSProvider(domainFilter, zoneIDFilter, zoneTypeFilter, cfg.AWSAssumeRole, cfg.DryRun)
+		p, err = aws.NewProvider(domainFilter, zoneIDFilter, zoneTypeFilter, cfg.AWSAssumeRole, cfg.DryRun)
 	case "azure":
-		p, err = provider.NewAzureProvider(cfg.AzureConfigFile, domainFilter, zoneIDFilter, cfg.AzureResourceGroup, cfg.DryRun)
+		p, err = azure.NewProvider(cfg.AzureConfigFile, domainFilter, zoneIDFilter, cfg.AzureResourceGroup, cfg.DryRun)
 	case "cloudflare":
-		p, err = provider.NewCloudFlareProvider(domainFilter, zoneIDFilter, cfg.CloudflareProxied, cfg.DryRun)
+		p, err = cloudflare.NewProvider(domainFilter, zoneIDFilter, cfg.CloudflareProxied, cfg.DryRun)
 	case "google":
-		p, err = provider.NewGoogleProvider(cfg.GoogleProject, domainFilter, zoneIDFilter, cfg.DryRun)
+		p, err = google.NewProvider(cfg.GoogleProject, domainFilter, zoneIDFilter, cfg.DryRun)
 	case "digitalocean":
-		p, err = provider.NewDigitalOceanProvider(domainFilter, cfg.DryRun)
+		p, err = digitalocean.NewProvider(domainFilter, cfg.DryRun)
 	case "dnsimple":
-		p, err = provider.NewDnsimpleProvider(domainFilter, zoneIDFilter, cfg.DryRun)
+		p, err = dnsimple.NewProvider(domainFilter, zoneIDFilter, cfg.DryRun)
 	case "infoblox":
-		p, err = provider.NewInfobloxProvider(
-			provider.InfobloxConfig{
+		p, err = infoblox.NewProvider(
+			infoblox.Config{
 				DomainFilter: domainFilter,
 				ZoneIDFilter: zoneIDFilter,
 				Host:         cfg.InfobloxGridHost,
@@ -120,8 +132,8 @@ func main() {
 			},
 		)
 	case "dyn":
-		p, err = provider.NewDynProvider(
-			provider.DynConfig{
+		p, err = dyn.NewProvider(
+			dyn.Config{
 				DomainFilter:  domainFilter,
 				ZoneIDFilter:  zoneIDFilter,
 				DryRun:        cfg.DryRun,
@@ -133,11 +145,11 @@ func main() {
 			},
 		)
 	case "inmemory":
-		p, err = provider.NewInMemoryProvider(provider.InMemoryInitZones(cfg.InMemoryZones), provider.InMemoryWithDomain(domainFilter), provider.InMemoryWithLogging()), nil
+		p, err = inmemory.NewProvider(inmemory.InitZones(cfg.InMemoryZones), inmemory.WithDomain(domainFilter), inmemory.WithLogging()), nil
 	case "designate":
-		p, err = provider.NewDesignateProvider(domainFilter, cfg.DryRun)
+		p, err = designate.NewProvider(domainFilter, cfg.DryRun)
 	case "pdns":
-		p, err = provider.NewPDNSProvider(cfg.PDNSServer, cfg.PDNSAPIKey, domainFilter, cfg.DryRun)
+		p, err = pdns.NewProvider(cfg.PDNSServer, cfg.PDNSAPIKey, domainFilter, cfg.DryRun)
 	default:
 		log.Fatalf("unknown dns provider: %s", cfg.Provider)
 	}

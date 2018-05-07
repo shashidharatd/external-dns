@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package dnsimple
 
 import (
 	"fmt"
@@ -26,6 +26,8 @@ import (
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
 	log "github.com/sirupsen/logrus"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const dnsimpleRecordTTL = 3600 // Default TTL of 1 hour if not set (DNSimple's default)
@@ -101,8 +103,8 @@ const (
 	dnsimpleUpdate = "UPDATE"
 )
 
-// NewDnsimpleProvider initializes a new Dnsimple based provider
-func NewDnsimpleProvider(domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, dryRun bool) (Provider, error) {
+// NewProvider initializes a new Dnsimple based provider
+func NewProvider(domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, dryRun bool) (Provider, error) {
 	oauthToken := os.Getenv("DNSIMPLE_OAUTH")
 	if len(oauthToken) == 0 {
 		return nil, fmt.Errorf("No dnsimple oauth token provided")

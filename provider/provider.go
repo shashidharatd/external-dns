@@ -30,8 +30,8 @@ type Provider interface {
 	ApplyChanges(changes *plan.Changes) error
 }
 
-// ensureTrailingDot ensures that the hostname receives a trailing dot if it hasn't already.
-func ensureTrailingDot(hostname string) string {
+// EnsureTrailingDot ensures that the hostname receives a trailing dot if it hasn't already.
+func EnsureTrailingDot(hostname string) string {
 	if net.ParseIP(hostname) != nil {
 		return hostname
 	}

@@ -18,20 +18,16 @@ package provider
 
 import (
 	"testing"
+
+	"github.com/kubernetes-incubator/external-dns/endpoint"
+	"github.com/kubernetes-incubator/external-dns/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestEnsureTrailingDot(t *testing.T) {
-	for _, tc := range []struct {
-		input, expected string
-	}{
-		{"example.org", "example.org."},
-		{"example.org.", "example.org."},
-		{"8.8.8.8", "8.8.8.8"},
-	} {
-		output := EnsureTrailingDot(tc.input)
+const (
+	RecordTTL = 300
+)
 
-		if output != tc.expected {
-			t.Errorf("expected %s, got %s", tc.expected, output)
-		}
-	}
+func ValidateEndpoints(t *testing.T, endpoints []*endpoint.Endpoint, expected []*endpoint.Endpoint) {
+	assert.True(t, testutils.SameEndpoints(endpoints, expected), "expected and actual endpoints don't match. %s:%s", endpoints, expected)
 }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package google
 
 import (
 	"fmt"
@@ -34,6 +34,8 @@ import (
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
@@ -115,8 +117,8 @@ type GoogleProvider struct {
 	changesClient changesServiceInterface
 }
 
-// NewGoogleProvider initializes a new Google CloudDNS based Provider.
-func NewGoogleProvider(project string, domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, dryRun bool) (*GoogleProvider, error) {
+// NewProvider initializes a new Google CloudDNS based Provider.
+func NewProvider(project string, domainFilter DomainFilter, zoneIDFilter ZoneIDFilter, dryRun bool) (*GoogleProvider, error) {
 	gcloud, err := google.DefaultClient(context.TODO(), dns.NdevClouddnsReadwriteScope)
 	if err != nil {
 		return nil, err
@@ -172,14 +174,14 @@ func (p *GoogleProvider) Zones() (map[string]*dns.ManagedZone, error) {
 		return nil
 	}
 
-	log.Debugf("Matching zones against domain filters: %v", p.domainFilter.filters)
+	log.Debugf("Matching zones against domain filters: %v", p.domainFilter.Filters)
 	if err := p.managedZonesClient.List(p.project).Pages(context.TODO(), f); err != nil {
 		return nil, err
 	}
 
 	if len(zones) == 0 {
 		if p.domainFilter.IsConfigured() {
-			log.Warnf("No zones in the project, %s, match domain filters: %v", p.project, p.domainFilter.filters)
+			log.Warnf("No zones in the project, %s, match domain filters: %v", p.project, p.domainFilter.Filters)
 		} else {
 			log.Warnf("No zones found in the project, %s", p.project)
 		}
@@ -201,7 +203,7 @@ func (p *GoogleProvider) Records() (endpoints []*endpoint.Endpoint, _ error) {
 
 	f := func(resp *dns.ResourceRecordSetsListResponse) error {
 		for _, r := range resp.Rrsets {
-			if !supportedRecordType(r.Type) {
+			if !SupportedRecordType(r.Type) {
 				continue
 			}
 			ep := &endpoint.Endpoint{
@@ -325,7 +327,7 @@ func (p *GoogleProvider) submitChange(change *dns.Change) error {
 // separateChange separates a multi-zone change into a single change per zone.
 func separateChange(zones map[string]*dns.ManagedZone, change *dns.Change) map[string]*dns.Change {
 	changes := make(map[string]*dns.Change)
-	zoneNameIDMapper := zoneIDName{}
+	zoneNameIDMapper := ZoneIDName{}
 	for _, z := range zones {
 		zoneNameIDMapper[z.Name] = z.DnsName
 		changes[z.Name] = &dns.Change{
@@ -334,7 +336,7 @@ func separateChange(zones map[string]*dns.ManagedZone, change *dns.Change) map[s
 		}
 	}
 	for _, a := range change.Additions {
-		if zoneName, _ := zoneNameIDMapper.FindZone(ensureTrailingDot(a.Name)); zoneName != "" {
+		if zoneName, _ := zoneNameIDMapper.FindZone(EnsureTrailingDot(a.Name)); zoneName != "" {
 			changes[zoneName].Additions = append(changes[zoneName].Additions, a)
 		} else {
 			log.Warnf("No matching zone for record addition: %s %s %s %d", a.Name, a.Type, a.Rrdatas, a.Ttl)
@@ -342,7 +344,7 @@ func separateChange(zones map[string]*dns.ManagedZone, change *dns.Change) map[s
 	}
 
 	for _, d := range change.Deletions {
-		if zoneName, _ := zoneNameIDMapper.FindZone(ensureTrailingDot(d.Name)); zoneName != "" {
+		if zoneName, _ := zoneNameIDMapper.FindZone(EnsureTrailingDot(d.Name)); zoneName != "" {
 			changes[zoneName].Deletions = append(changes[zoneName].Deletions, d)
 		} else {
 			log.Warnf("No matching zone for record deletion: %s %s %s %d", d.Name, d.Type, d.Rrdatas, d.Ttl)
@@ -367,7 +369,7 @@ func newRecord(ep *endpoint.Endpoint) *dns.ResourceRecordSet {
 	targets := make([]string, len(ep.Targets))
 	copy(targets, []string(ep.Targets))
 	if ep.RecordType == endpoint.RecordTypeCNAME {
-		targets[0] = ensureTrailingDot(targets[0])
+		targets[0] = EnsureTrailingDot(targets[0])
 	}
 
 	// no annotation results in a Ttl of 0, default to 300 for backwards-compatability
@@ -377,7 +379,7 @@ func newRecord(ep *endpoint.Endpoint) *dns.ResourceRecordSet {
 	}
 
 	return &dns.ResourceRecordSet{
-		Name:    ensureTrailingDot(ep.DNSName),
+		Name:    EnsureTrailingDot(ep.DNSName),
 		Rrdatas: targets,
 		Ttl:     ttl,
 		Type:    ep.RecordType,

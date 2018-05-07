@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package dyn
 
 import (
 	"fmt"
@@ -29,6 +29,8 @@ import (
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 	"github.com/kubernetes-incubator/external-dns/plan"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 const (
@@ -91,8 +93,8 @@ func (c *cache) Get(link string) *endpoint.Endpoint {
 	return result.ep
 }
 
-// DynConfig hold connection parameters to dyn.com and interanl state
-type DynConfig struct {
+// Config hold connection parameters to dyn.com and interanl state
+type Config struct {
 	DomainFilter  DomainFilter
 	ZoneIDFilter  ZoneIDFilter
 	DryRun        bool
@@ -106,7 +108,7 @@ type DynConfig struct {
 
 // DynProvider is the actual interface impl.
 type dynProviderState struct {
-	DynConfig
+	Config
 	Cache              *cache
 	LastLoginErrorTime int64
 }
@@ -142,10 +144,10 @@ type ZonePublisResponse struct {
 	Data map[string]interface{} `json:"data"`
 }
 
-// NewDynProvider initializes a new Dyn Provider.
-func NewDynProvider(config DynConfig) (Provider, error) {
+// NewProvider initializes a new Dyn Provider.
+func NewProvider(config Config) (Provider, error) {
 	return &dynProviderState{
-		DynConfig: config,
+		Config: config,
 		Cache: &cache{
 			contents: make(map[string]*entry),
 		},
@@ -329,7 +331,7 @@ func (d *dynProviderState) buildLinkToRecord(ep *endpoint.Endpoint) string {
 		return ""
 	}
 	var matchingZone = ""
-	for _, zone := range d.ZoneIDFilter.zoneIDs {
+	for _, zone := range d.ZoneIDFilter.ZoneIDs {
 		if strings.HasSuffix(ep.DNSName, zone) {
 			matchingZone = zone
 			break
@@ -385,7 +387,7 @@ func (d *dynProviderState) login() (*dynect.Client, error) {
 // the zones we are allowed to touch. Currently only exact matches are considered, not all
 // zones with the given suffix
 func (d *dynProviderState) zones(client *dynect.Client) []string {
-	return d.ZoneIDFilter.zoneIDs
+	return d.ZoneIDFilter.ZoneIDs
 }
 
 func (d *dynProviderState) buildRecordRequest(ep *endpoint.Endpoint) (string, *dynect.RecordRequest) {

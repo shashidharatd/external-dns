@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package pdns
 
 import (
 	"errors"
@@ -28,6 +28,8 @@ import (
 
 	pgo "github.com/ffledgling/pdns-go"
 	"github.com/kubernetes-incubator/external-dns/endpoint"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 // FIXME: What do we do about labels?
@@ -476,19 +478,19 @@ type NewPDNSProviderTestSuite struct {
 }
 
 func (suite *NewPDNSProviderTestSuite) TestPDNSProviderCreate() {
-	// Function definition: NewPDNSProvider(server string, apikey string, domainFilter DomainFilter, dryRun bool) (*PDNSProvider, error)
+	// Function definition: NewProvider(server string, apikey string, domainFilter DomainFilter, dryRun bool) (*PDNSProvider, error)
 
-	_, err := NewPDNSProvider("http://localhost:8081", "", NewDomainFilter([]string{""}), false)
+	_, err := NewProvider("http://localhost:8081", "", NewDomainFilter([]string{""}), false)
 	assert.Error(suite.T(), err, "--pdns-api-key should be specified")
 
-	_, err = NewPDNSProvider("http://localhost:8081", "foo", NewDomainFilter([]string{"example.com", "example.org"}), false)
+	_, err = NewProvider("http://localhost:8081", "foo", NewDomainFilter([]string{"example.com", "example.org"}), false)
 	assert.Error(suite.T(), err, "--domainfilter should raise an error")
 
-	_, err = NewPDNSProvider("http://localhost:8081", "foo", NewDomainFilter([]string{""}), true)
+	_, err = NewProvider("http://localhost:8081", "foo", NewDomainFilter([]string{""}), true)
 	assert.Error(suite.T(), err, "--dry-run should raise an error")
 
 	// This is our "regular" code path, no error should be thrown
-	_, err = NewPDNSProvider("http://localhost:8081", "foo", NewDomainFilter([]string{""}), false)
+	_, err = NewProvider("http://localhost:8081", "foo", NewDomainFilter([]string{""}), false)
 	assert.Nil(suite.T(), err, "Regular case should raise no error")
 }
 

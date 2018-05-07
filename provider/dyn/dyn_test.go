@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package provider
+package dyn
 
 import (
 	"errors"
@@ -26,6 +26,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
+
+	. "github.com/kubernetes-incubator/external-dns/provider"
 )
 
 func TestDynMerge_NoUpdateOnTTL0Changes(t *testing.T) {
@@ -203,7 +205,7 @@ func TestDyn_endpointToRecord(t *testing.T) {
 
 func TestDyn_buildLinkToRecord(t *testing.T) {
 	provider := &dynProviderState{
-		DynConfig: DynConfig{
+		Config: Config{
 			ZoneIDFilter: NewZoneIDFilter([]string{"example.com"}),
 			DomainFilter: NewDomainFilter([]string{"the-target.example.com"}),
 		},
