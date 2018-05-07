@@ -27,15 +27,15 @@ import (
 
 const (
 	// The annotation used for figuring out which controller is responsible
-	controllerAnnotationKey = "external-dns.alpha.kubernetes.io/controller"
+	ControllerAnnotationKey = "external-dns.alpha.kubernetes.io/controller"
 	// The annotation used for defining the desired hostname
-	hostnameAnnotationKey = "external-dns.alpha.kubernetes.io/hostname"
+	HostnameAnnotationKey = "external-dns.alpha.kubernetes.io/hostname"
 	// The annotation used for defining the desired ingress target
-	targetAnnotationKey = "external-dns.alpha.kubernetes.io/target"
+	TargetAnnotationKey = "external-dns.alpha.kubernetes.io/target"
 	// The annotation used for defining the desired DNS record TTL
-	ttlAnnotationKey = "external-dns.alpha.kubernetes.io/ttl"
+	TTLAnnotationKey = "external-dns.alpha.kubernetes.io/ttl"
 	// The value of the controller annotation so that we feel responsible
-	controllerAnnotationValue = "dns-controller"
+	ControllerAnnotationValue = "dns-controller"
 )
 
 const (
@@ -48,9 +48,19 @@ type Source interface {
 	Endpoints() ([]*endpoint.Endpoint, error)
 }
 
-func getTTLFromAnnotations(annotations map[string]string) (endpoint.TTL, error) {
+// Config holds shared configuration options for all Sources.
+type Config struct {
+	Namespace                string
+	AnnotationFilter         string
+	FQDNTemplate             string
+	CombineFQDNAndAnnotation bool
+	Compatibility            string
+	PublishInternal          bool
+}
+
+func GetTTLFromAnnotations(annotations map[string]string) (endpoint.TTL, error) {
 	ttlNotConfigured := endpoint.TTL(0)
-	ttlAnnotation, exists := annotations[ttlAnnotationKey]
+	ttlAnnotation, exists := annotations[TTLAnnotationKey]
 	if !exists {
 		return ttlNotConfigured, nil
 	}
@@ -64,9 +74,9 @@ func getTTLFromAnnotations(annotations map[string]string) (endpoint.TTL, error) 
 	return endpoint.TTL(ttlValue), nil
 }
 
-// suitableType returns the DNS resource record type suitable for the target.
+// SuitableType returns the DNS resource record type suitable for the target.
 // In this case type A for IPs and type CNAME for everything else.
-func suitableType(target string) string {
+func SuitableType(target string) string {
 	if net.ParseIP(target) != nil {
 		return endpoint.RecordTypeA
 	}

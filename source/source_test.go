@@ -39,37 +39,37 @@ func TestGetTTLFromAnnotations(t *testing.T) {
 		},
 		{
 			title:       "TTL annotation value is not a number",
-			annotations: map[string]string{ttlAnnotationKey: "foo"},
+			annotations: map[string]string{TTLAnnotationKey: "foo"},
 			expectedTTL: endpoint.TTL(0),
 			expectedErr: fmt.Errorf("\"foo\" is not a valid TTL value"),
 		},
 		{
 			title:       "TTL annotation value is empty",
-			annotations: map[string]string{ttlAnnotationKey: ""},
+			annotations: map[string]string{TTLAnnotationKey: ""},
 			expectedTTL: endpoint.TTL(0),
 			expectedErr: fmt.Errorf("\"\" is not a valid TTL value"),
 		},
 		{
 			title:       "TTL annotation value is negative number",
-			annotations: map[string]string{ttlAnnotationKey: "-1"},
+			annotations: map[string]string{TTLAnnotationKey: "-1"},
 			expectedTTL: endpoint.TTL(0),
 			expectedErr: fmt.Errorf("TTL value must be between [%d, %d]", ttlMinimum, ttlMaximum),
 		},
 		{
 			title:       "TTL annotation value is too high",
-			annotations: map[string]string{ttlAnnotationKey: fmt.Sprintf("%d", 1<<32)},
+			annotations: map[string]string{TTLAnnotationKey: fmt.Sprintf("%d", 1<<32)},
 			expectedTTL: endpoint.TTL(0),
 			expectedErr: fmt.Errorf("TTL value must be between [%d, %d]", ttlMinimum, ttlMaximum),
 		},
 		{
 			title:       "TTL annotation value is set correctly",
-			annotations: map[string]string{ttlAnnotationKey: "60"},
+			annotations: map[string]string{TTLAnnotationKey: "60"},
 			expectedTTL: endpoint.TTL(60),
 			expectedErr: nil,
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			ttl, err := getTTLFromAnnotations(tc.annotations)
+			ttl, err := GetTTLFromAnnotations(tc.annotations)
 			assert.Equal(t, tc.expectedTTL, ttl)
 			assert.Equal(t, tc.expectedErr, err)
 		})
@@ -85,7 +85,7 @@ func TestSuitableType(t *testing.T) {
 		{"bar.eu-central-1.elb.amazonaws.com", "", "CNAME"},
 	} {
 
-		recordType := suitableType(tc.target)
+		recordType := SuitableType(tc.target)
 
 		if recordType != tc.expected {
 			t.Errorf("expected %s, got %s", tc.expected, recordType)

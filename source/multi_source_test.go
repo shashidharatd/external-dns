@@ -89,7 +89,7 @@ func testMultiSourceEndpoints(t *testing.T) {
 			require.NoError(t, err)
 
 			// Validate returned endpoints against desired endpoints.
-			validateEndpoints(t, endpoints, tc.expected)
+			ValidateEndpoints(t, endpoints, tc.expected)
 
 			// Validate that the nested sources were called.
 			for _, src := range sources {

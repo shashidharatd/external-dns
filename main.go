@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -34,6 +35,7 @@ import (
 	"github.com/kubernetes-incubator/external-dns/provider"
 	"github.com/kubernetes-incubator/external-dns/registry"
 	"github.com/kubernetes-incubator/external-dns/source"
+	"github.com/kubernetes-incubator/external-dns/source/clientgenerator"
 
 	"github.com/kubernetes-incubator/external-dns/provider/aws"
 	"github.com/kubernetes-incubator/external-dns/provider/azure"
@@ -46,7 +48,14 @@ import (
 	"github.com/kubernetes-incubator/external-dns/provider/infoblox"
 	"github.com/kubernetes-incubator/external-dns/provider/inmemory"
 	"github.com/kubernetes-incubator/external-dns/provider/pdns"
+
+	"github.com/kubernetes-incubator/external-dns/source/fake"
+	"github.com/kubernetes-incubator/external-dns/source/ingress"
+	"github.com/kubernetes-incubator/external-dns/source/service"
 )
+
+// ErrSourceNotFound is returned when a requested source doesn't exist.
+var ErrSourceNotFound = errors.New("source not found")
 
 func main() {
 	cfg := externaldns.NewConfig()
@@ -88,7 +97,7 @@ func main() {
 	}
 
 	// Lookup all the selected sources by names and pass them the desired configuration.
-	sources, err := source.ByNames(&source.SingletonClientGenerator{
+	sources, err := ByNames(&clientgenerator.SingletonClientGenerator{
 		KubeConfig: cfg.KubeConfig,
 		KubeMaster: cfg.Master,
 	}, cfg.Sources, sourceCfg)
@@ -193,6 +202,43 @@ func main() {
 	}
 
 	ctrl.Run(stopChan)
+}
+
+// ByNames returns multiple Sources given multiple names.
+func ByNames(p clientgenerator.ClientGenerator, names []string, cfg *source.Config) ([]source.Source, error) {
+	sources := []source.Source{}
+	for _, name := range names {
+		source, err := BuildWithConfig(name, p, cfg)
+		if err != nil {
+			return nil, err
+		}
+		sources = append(sources, source)
+	}
+
+	return sources, nil
+}
+
+// BuildWithConfig allows to generate a Source implementation from the shared config
+func BuildWithConfig(source string, p clientgenerator.ClientGenerator, cfg *source.Config) (s source.Source, err error) {
+	switch source {
+	case "service":
+		client, err := p.KubeClient()
+		if err != nil {
+			return nil, err
+		}
+		s, err = service.NewSource(client, cfg.Namespace, cfg.AnnotationFilter, cfg.FQDNTemplate, cfg.CombineFQDNAndAnnotation, cfg.Compatibility, cfg.PublishInternal)
+	case "ingress":
+		client, err := p.KubeClient()
+		if err != nil {
+			return nil, err
+		}
+		s, err = ingress.NewSource(client, cfg.Namespace, cfg.AnnotationFilter, cfg.FQDNTemplate, cfg.CombineFQDNAndAnnotation)
+	case "fake":
+		s, err = fake.NewSource(cfg.FQDNTemplate)
+	default:
+		err = ErrSourceNotFound
+	}
+	return s, err
 }
 
 func handleSigterm(stopChan chan struct{}) {

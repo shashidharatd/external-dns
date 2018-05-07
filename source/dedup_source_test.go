@@ -103,7 +103,7 @@ func testDedupEndpoints(t *testing.T) {
 			}
 
 			// Validate returned endpoints against desired endpoints.
-			validateEndpoints(t, endpoints, tc.expected)
+			ValidateEndpoints(t, endpoints, tc.expected)
 
 			// Validate that the mock source was called.
 			mockSource.AssertExpectations(t)
