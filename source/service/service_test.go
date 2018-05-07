@@ -20,9 +20,9 @@ import (
 	"net"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/pkg/api/v1"
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 
@@ -36,7 +36,7 @@ import (
 type ServiceSuite struct {
 	suite.Suite
 	sc             Source
-	fooWithTargets *v1.Service
+	fooWithTargets *corev1.Service
 }
 
 func (suite *ServiceSuite) SetupTest() {
@@ -44,7 +44,7 @@ func (suite *ServiceSuite) SetupTest() {
 	var err error
 
 	suite.sc, err = NewSource(
-		fakeClient,
+		fakeClient.CoreV1(),
 		"",
 		"",
 		"{{.Name}}",
@@ -52,18 +52,18 @@ func (suite *ServiceSuite) SetupTest() {
 		"",
 		false,
 	)
-	suite.fooWithTargets = &v1.Service{
-		Spec: v1.ServiceSpec{
-			Type: v1.ServiceTypeLoadBalancer,
+	suite.fooWithTargets = &corev1.Service{
+		Spec: corev1.ServiceSpec{
+			Type: corev1.ServiceTypeLoadBalancer,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:   "default",
 			Name:        "foo-with-targets",
 			Annotations: map[string]string{},
 		},
-		Status: v1.ServiceStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+		Status: corev1.ServiceStatus{
+			LoadBalancer: corev1.LoadBalancerStatus{
+				Ingress: []corev1.LoadBalancerIngress{
 					{IP: "8.8.8.8"},
 					{Hostname: "foo"},
 				},
@@ -127,7 +127,7 @@ func testServiceSourceNewServiceSource(t *testing.T) {
 	} {
 		t.Run(ti.title, func(t *testing.T) {
 			_, err := NewSource(
-				fake.NewSimpleClientset(),
+				fake.NewSimpleClientset().CoreV1(),
 				"",
 				ti.annotationFilter,
 				ti.fqdnTemplate,
@@ -153,7 +153,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 		annotationFilter         string
 		svcNamespace             string
 		svcName                  string
-		svcType                  v1.ServiceType
+		svcType                  corev1.ServiceType
 		compatibility            string
 		fqdnTemplate             string
 		combineFQDNAndAnnotation bool
@@ -170,7 +170,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -187,7 +187,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -208,7 +208,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"",
 			false,
@@ -227,7 +227,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"{{.Name}}.fqdn.org,{{.Name}}.fqdn.com",
 			false,
@@ -247,7 +247,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"{{.Name}}.fqdn.org,{{.Name}}.fqdn.com",
 			true,
@@ -271,7 +271,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -293,7 +293,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -315,7 +315,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -336,7 +336,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -358,7 +358,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -380,7 +380,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"{{.Name}}.ext-dns.test.com",
 			false,
@@ -400,7 +400,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -421,7 +421,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"other-testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -440,7 +440,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"other-testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -461,7 +461,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"service.beta.kubernetes.io/external-traffic in (Global, OnlyLocal)",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -483,7 +483,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"service.beta.kubernetes.io/external-traffic in (Global, OnlyLocal)",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -503,7 +503,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"service.beta.kubernetes.io/external-traffic in (Global OnlyLocal)",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -523,7 +523,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"service.beta.kubernetes.io/external-traffic=Global",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -545,7 +545,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"service.beta.kubernetes.io/external-traffic=Global",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -565,7 +565,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -584,7 +584,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -605,7 +605,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -624,7 +624,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"mate",
 			"",
 			false,
@@ -645,7 +645,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"molecule",
 			"",
 			false,
@@ -669,7 +669,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"{{.Name}}.bar.example.com",
 			false,
@@ -689,7 +689,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"{{.Name}}.bar.example.com",
 			false,
@@ -711,7 +711,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"mate",
 			"{{.Name}}.bar.example.com",
 			false,
@@ -732,7 +732,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"{{.Calibre}}.bar.example.com",
 			false,
@@ -749,7 +749,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -770,7 +770,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -792,7 +792,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -814,7 +814,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeLoadBalancer,
+			corev1.ServiceTypeLoadBalancer,
 			"",
 			"",
 			false,
@@ -836,17 +836,17 @@ func testServiceSourceEndpoints(t *testing.T) {
 			kubernetes := fake.NewSimpleClientset()
 
 			// Create a service to test against
-			ingresses := []v1.LoadBalancerIngress{}
+			ingresses := []corev1.LoadBalancerIngress{}
 			for _, lb := range tc.lbs {
 				if net.ParseIP(lb) != nil {
-					ingresses = append(ingresses, v1.LoadBalancerIngress{IP: lb})
+					ingresses = append(ingresses, corev1.LoadBalancerIngress{IP: lb})
 				} else {
-					ingresses = append(ingresses, v1.LoadBalancerIngress{Hostname: lb})
+					ingresses = append(ingresses, corev1.LoadBalancerIngress{Hostname: lb})
 				}
 			}
 
-			service := &v1.Service{
-				Spec: v1.ServiceSpec{
+			service := &corev1.Service{
+				Spec: corev1.ServiceSpec{
 					Type:      tc.svcType,
 					ClusterIP: tc.clusterIP,
 				},
@@ -856,8 +856,8 @@ func testServiceSourceEndpoints(t *testing.T) {
 					Labels:      tc.labels,
 					Annotations: tc.annotations,
 				},
-				Status: v1.ServiceStatus{
-					LoadBalancer: v1.LoadBalancerStatus{
+				Status: corev1.ServiceStatus{
+					LoadBalancer: corev1.LoadBalancerStatus{
 						Ingress: ingresses,
 					},
 				},
@@ -868,7 +868,7 @@ func testServiceSourceEndpoints(t *testing.T) {
 
 			// Create our object under test and get the endpoints.
 			client, _ := NewSource(
-				kubernetes,
+				kubernetes.CoreV1(),
 				tc.targetNamespace,
 				tc.annotationFilter,
 				tc.fqdnTemplate,
@@ -899,7 +899,7 @@ func TestClusterIpServices(t *testing.T) {
 		annotationFilter string
 		svcNamespace     string
 		svcName          string
-		svcType          v1.ServiceType
+		svcType          corev1.ServiceType
 		compatibility    string
 		fqdnTemplate     string
 		labels           map[string]string
@@ -915,7 +915,7 @@ func TestClusterIpServices(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"",
 			map[string]string{},
@@ -935,7 +935,7 @@ func TestClusterIpServices(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"{{.Name}}.bar.example.com",
 			map[string]string{},
@@ -953,12 +953,12 @@ func TestClusterIpServices(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"",
 			map[string]string{},
 			map[string]string{},
-			v1.ClusterIPNone,
+			corev1.ClusterIPNone,
 			[]string{},
 			[]*endpoint.Endpoint{},
 			false,
@@ -969,17 +969,17 @@ func TestClusterIpServices(t *testing.T) {
 			kubernetes := fake.NewSimpleClientset()
 
 			// Create a service to test against
-			ingresses := []v1.LoadBalancerIngress{}
+			ingresses := []corev1.LoadBalancerIngress{}
 			for _, lb := range tc.lbs {
 				if net.ParseIP(lb) != nil {
-					ingresses = append(ingresses, v1.LoadBalancerIngress{IP: lb})
+					ingresses = append(ingresses, corev1.LoadBalancerIngress{IP: lb})
 				} else {
-					ingresses = append(ingresses, v1.LoadBalancerIngress{Hostname: lb})
+					ingresses = append(ingresses, corev1.LoadBalancerIngress{Hostname: lb})
 				}
 			}
 
-			service := &v1.Service{
-				Spec: v1.ServiceSpec{
+			service := &corev1.Service{
+				Spec: corev1.ServiceSpec{
 					Type:      tc.svcType,
 					ClusterIP: tc.clusterIP,
 				},
@@ -989,8 +989,8 @@ func TestClusterIpServices(t *testing.T) {
 					Labels:      tc.labels,
 					Annotations: tc.annotations,
 				},
-				Status: v1.ServiceStatus{
-					LoadBalancer: v1.LoadBalancerStatus{
+				Status: corev1.ServiceStatus{
+					LoadBalancer: corev1.LoadBalancerStatus{
 						Ingress: ingresses,
 					},
 				},
@@ -1001,7 +1001,7 @@ func TestClusterIpServices(t *testing.T) {
 
 			// Create our object under test and get the endpoints.
 			client, _ := NewSource(
-				kubernetes,
+				kubernetes.CoreV1(),
 				tc.targetNamespace,
 				tc.annotationFilter,
 				tc.fqdnTemplate,
@@ -1031,7 +1031,7 @@ func TestHeadlessServices(t *testing.T) {
 		targetNamespace string
 		svcNamespace    string
 		svcName         string
-		svcType         v1.ServiceType
+		svcType         corev1.ServiceType
 		compatibility   string
 		fqdnTemplate    string
 		labels          map[string]string
@@ -1042,7 +1042,7 @@ func TestHeadlessServices(t *testing.T) {
 		lbs             []string
 		podnames        []string
 		hostnames       []string
-		phases          []v1.PodPhase
+		phases          []corev1.PodPhase
 		expected        []*endpoint.Endpoint
 		expectError     bool
 	}{
@@ -1051,14 +1051,14 @@ func TestHeadlessServices(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"",
 			map[string]string{"component": "foo"},
 			map[string]string{
 				HostnameAnnotationKey: "service.example.org",
 			},
-			v1.ClusterIPNone,
+			corev1.ClusterIPNone,
 			"1.1.1.1",
 			map[string]string{
 				"component": "foo",
@@ -1066,7 +1066,7 @@ func TestHeadlessServices(t *testing.T) {
 			[]string{},
 			[]string{"foo-0", "foo-1"},
 			[]string{"foo-0", "foo-1"},
-			[]v1.PodPhase{v1.PodRunning, v1.PodRunning},
+			[]corev1.PodPhase{corev1.PodRunning, corev1.PodRunning},
 			[]*endpoint.Endpoint{
 				{DNSName: "foo-0.service.example.org", Targets: endpoint.Targets{"1.1.1.1"}},
 				{DNSName: "foo-1.service.example.org", Targets: endpoint.Targets{"1.1.1.1"}},
@@ -1078,14 +1078,14 @@ func TestHeadlessServices(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"",
 			map[string]string{"component": "foo"},
 			map[string]string{
 				HostnameAnnotationKey: "service.example.org",
 			},
-			v1.ClusterIPNone,
+			corev1.ClusterIPNone,
 			"1.1.1.1",
 			map[string]string{
 				"component": "foo",
@@ -1093,7 +1093,7 @@ func TestHeadlessServices(t *testing.T) {
 			[]string{},
 			[]string{"foo-0", "foo-1"},
 			[]string{"foo-0", "foo-1"},
-			[]v1.PodPhase{v1.PodRunning, v1.PodFailed},
+			[]corev1.PodPhase{corev1.PodRunning, corev1.PodFailed},
 			[]*endpoint.Endpoint{
 				{DNSName: "foo-0.service.example.org", Targets: endpoint.Targets{"1.1.1.1"}},
 			},
@@ -1104,14 +1104,14 @@ func TestHeadlessServices(t *testing.T) {
 			"",
 			"testing",
 			"foo",
-			v1.ServiceTypeClusterIP,
+			corev1.ServiceTypeClusterIP,
 			"",
 			"",
 			map[string]string{"component": "foo"},
 			map[string]string{
 				HostnameAnnotationKey: "service.example.org",
 			},
-			v1.ClusterIPNone,
+			corev1.ClusterIPNone,
 			"1.1.1.1",
 			map[string]string{
 				"component": "foo",
@@ -1119,7 +1119,7 @@ func TestHeadlessServices(t *testing.T) {
 			[]string{},
 			[]string{"foo-0", "foo-1"},
 			[]string{"", ""},
-			[]v1.PodPhase{v1.PodRunning, v1.PodRunning},
+			[]corev1.PodPhase{corev1.PodRunning, corev1.PodRunning},
 			[]*endpoint.Endpoint{
 				{DNSName: "service.example.org", Targets: endpoint.Targets{"1.1.1.1"}},
 				{DNSName: "service.example.org", Targets: endpoint.Targets{"1.1.1.1"}},
@@ -1131,8 +1131,8 @@ func TestHeadlessServices(t *testing.T) {
 			// Create a Kubernetes testing client
 			kubernetes := fake.NewSimpleClientset()
 
-			service := &v1.Service{
-				Spec: v1.ServiceSpec{
+			service := &corev1.Service{
+				Spec: corev1.ServiceSpec{
 					Type:      tc.svcType,
 					ClusterIP: tc.clusterIP,
 					Selector:  tc.selector,
@@ -1143,15 +1143,15 @@ func TestHeadlessServices(t *testing.T) {
 					Labels:      tc.labels,
 					Annotations: tc.annotations,
 				},
-				Status: v1.ServiceStatus{},
+				Status: corev1.ServiceStatus{},
 			}
 			_, err := kubernetes.CoreV1().Services(service.Namespace).Create(service)
 			require.NoError(t, err)
 
 			for i, podname := range tc.podnames {
-				pod := &v1.Pod{
-					Spec: v1.PodSpec{
-						Containers: []v1.Container{},
+				pod := &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{},
 						Hostname:   tc.hostnames[i],
 					},
 					ObjectMeta: metav1.ObjectMeta{
@@ -1160,7 +1160,7 @@ func TestHeadlessServices(t *testing.T) {
 						Labels:      tc.labels,
 						Annotations: tc.annotations,
 					},
-					Status: v1.PodStatus{
+					Status: corev1.PodStatus{
 						PodIP: tc.podIP,
 						Phase: tc.phases[i],
 					},
@@ -1172,7 +1172,7 @@ func TestHeadlessServices(t *testing.T) {
 
 			// Create our object under test and get the endpoints.
 			client, _ := NewSource(
-				kubernetes,
+				kubernetes.CoreV1(),
 				tc.targetNamespace,
 				"",
 				tc.fqdnTemplate,
@@ -1198,7 +1198,7 @@ func TestHeadlessServices(t *testing.T) {
 func BenchmarkServiceEndpoints(b *testing.B) {
 	kubernetes := fake.NewSimpleClientset()
 
-	service := &v1.Service{
+	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "testing",
 			Name:      "foo",
@@ -1206,9 +1206,9 @@ func BenchmarkServiceEndpoints(b *testing.B) {
 				HostnameAnnotationKey: "foo.example.org.",
 			},
 		},
-		Status: v1.ServiceStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{
+		Status: corev1.ServiceStatus{
+			LoadBalancer: corev1.LoadBalancerStatus{
+				Ingress: []corev1.LoadBalancerIngress{
 					{IP: "1.2.3.4"},
 					{IP: "8.8.8.8"},
 				},
@@ -1219,7 +1219,7 @@ func BenchmarkServiceEndpoints(b *testing.B) {
 	_, err := kubernetes.CoreV1().Services(service.Namespace).Create(service)
 	require.NoError(b, err)
 
-	client, err := NewSource(kubernetes, v1.NamespaceAll, "", "", false, "", false)
+	client, err := NewSource(kubernetes.CoreV1(), corev1.NamespaceAll, "", "", false, "", false)
 	require.NoError(b, err)
 
 	for i := 0; i < b.N; i++ {

@@ -19,7 +19,7 @@ package service
 import (
 	"strings"
 
-	"k8s.io/client-go/pkg/api/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 )
@@ -31,7 +31,7 @@ const (
 
 // legacyEndpointsFromService tries to retrieve Endpoints from Services
 // annotated with legacy annotations.
-func legacyEndpointsFromService(svc *v1.Service, compatibility string) []*endpoint.Endpoint {
+func legacyEndpointsFromService(svc *corev1.Service, compatibility string) []*endpoint.Endpoint {
 	switch compatibility {
 	case "mate":
 		return legacyEndpointsFromMateService(svc)
@@ -44,7 +44,7 @@ func legacyEndpointsFromService(svc *v1.Service, compatibility string) []*endpoi
 
 // legacyEndpointsFromMateService tries to retrieve Endpoints from Services
 // annotated with Mate's annotation semantics.
-func legacyEndpointsFromMateService(svc *v1.Service) []*endpoint.Endpoint {
+func legacyEndpointsFromMateService(svc *corev1.Service) []*endpoint.Endpoint {
 	var endpoints []*endpoint.Endpoint
 
 	// Get the desired hostname of the service from the annotation.
@@ -68,7 +68,7 @@ func legacyEndpointsFromMateService(svc *v1.Service) []*endpoint.Endpoint {
 
 // legacyEndpointsFromMoleculeService tries to retrieve Endpoints from Services
 // annotated with Molecule Software's annotation semantics.
-func legacyEndpointsFromMoleculeService(svc *v1.Service) []*endpoint.Endpoint {
+func legacyEndpointsFromMoleculeService(svc *corev1.Service) []*endpoint.Endpoint {
 	var endpoints []*endpoint.Endpoint
 
 	// Check that the Service opted-in to being processed.

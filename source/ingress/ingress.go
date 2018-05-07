@@ -25,10 +25,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	extensionv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	extensionv1beta1client "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 
@@ -40,7 +40,7 @@ import (
 // Use TargetAnnotationKey to explicitly set Endpoint. (useful if the ingress
 // controller does not update, or to override with alternative endpoint)
 type ingressSource struct {
-	client                kubernetes.Interface
+	client                extensionv1beta1client.ExtensionsV1beta1Interface
 	namespace             string
 	annotationFilter      string
 	fqdnTemplate          *template.Template
@@ -48,7 +48,7 @@ type ingressSource struct {
 }
 
 // NewSource creates a new ingressSource with the given config.
-func NewSource(kubeClient kubernetes.Interface, namespace, annotationFilter string, fqdnTemplate string, combineFqdnAnnotation bool) (*ingressSource, error) {
+func NewSource(client extensionv1beta1client.ExtensionsV1beta1Interface, namespace, annotationFilter string, fqdnTemplate string, combineFqdnAnnotation bool) (*ingressSource, error) {
 	var (
 		tmpl *template.Template
 		err  error
@@ -63,7 +63,7 @@ func NewSource(kubeClient kubernetes.Interface, namespace, annotationFilter stri
 	}
 
 	return &ingressSource{
-		client:                kubeClient,
+		client:                client,
 		namespace:             namespace,
 		annotationFilter:      annotationFilter,
 		fqdnTemplate:          tmpl,
@@ -74,7 +74,7 @@ func NewSource(kubeClient kubernetes.Interface, namespace, annotationFilter stri
 // Endpoints returns endpoint objects for each host-target combination that should be processed.
 // Retrieves all ingress resources on all namespaces
 func (sc *ingressSource) Endpoints() ([]*endpoint.Endpoint, error) {
-	ingresses, err := sc.client.Extensions().Ingresses(sc.namespace).List(metav1.ListOptions{})
+	ingresses, err := sc.client.Ingresses(sc.namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (sc *ingressSource) Endpoints() ([]*endpoint.Endpoint, error) {
 
 // get endpoints from optional "target" annotation
 // Returns empty endpoints array if none are found.
-func getTargetsFromTargetAnnotation(ing *v1beta1.Ingress) endpoint.Targets {
+func getTargetsFromTargetAnnotation(ing *extensionv1beta1.Ingress) endpoint.Targets {
 	var targets endpoint.Targets
 
 	// Get the desired hostname of the ingress from the annotation.
@@ -145,7 +145,7 @@ func getTargetsFromTargetAnnotation(ing *v1beta1.Ingress) endpoint.Targets {
 	return targets
 }
 
-func (sc *ingressSource) endpointsFromTemplate(ing *v1beta1.Ingress) ([]*endpoint.Endpoint, error) {
+func (sc *ingressSource) endpointsFromTemplate(ing *extensionv1beta1.Ingress) ([]*endpoint.Endpoint, error) {
 	// Process the whole template string
 	var buf bytes.Buffer
 	err := sc.fqdnTemplate.Execute(&buf, ing)
@@ -177,7 +177,7 @@ func (sc *ingressSource) endpointsFromTemplate(ing *v1beta1.Ingress) ([]*endpoin
 }
 
 // filterByAnnotations filters a list of ingresses by a given annotation selector.
-func (sc *ingressSource) filterByAnnotations(ingresses []v1beta1.Ingress) ([]v1beta1.Ingress, error) {
+func (sc *ingressSource) filterByAnnotations(ingresses []extensionv1beta1.Ingress) ([]extensionv1beta1.Ingress, error) {
 	labelSelector, err := metav1.ParseToLabelSelector(sc.annotationFilter)
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (sc *ingressSource) filterByAnnotations(ingresses []v1beta1.Ingress) ([]v1b
 		return ingresses, nil
 	}
 
-	filteredList := []v1beta1.Ingress{}
+	filteredList := []extensionv1beta1.Ingress{}
 
 	for _, ingress := range ingresses {
 		// convert the ingress' annotations to an equivalent label selector
@@ -207,14 +207,14 @@ func (sc *ingressSource) filterByAnnotations(ingresses []v1beta1.Ingress) ([]v1b
 	return filteredList, nil
 }
 
-func (sc *ingressSource) setResourceLabel(ingress v1beta1.Ingress, endpoints []*endpoint.Endpoint) {
+func (sc *ingressSource) setResourceLabel(ingress extensionv1beta1.Ingress, endpoints []*endpoint.Endpoint) {
 	for _, ep := range endpoints {
 		ep.Labels[endpoint.ResourceLabelKey] = fmt.Sprintf("ingress/%s/%s", ingress.Namespace, ingress.Name)
 	}
 }
 
 // endpointsFromIngress extracts the endpoints from ingress object
-func endpointsFromIngress(ing *v1beta1.Ingress) []*endpoint.Endpoint {
+func endpointsFromIngress(ing *extensionv1beta1.Ingress) []*endpoint.Endpoint {
 	var endpoints []*endpoint.Endpoint
 
 	ttl, err := GetTTLFromAnnotations(ing.Annotations)
@@ -277,7 +277,7 @@ func endpointsForHostname(hostname string, targets endpoint.Targets, ttl endpoin
 	return endpoints
 }
 
-func targetsFromIngressStatus(status v1beta1.IngressStatus) endpoint.Targets {
+func targetsFromIngressStatus(status extensionv1beta1.IngressStatus) endpoint.Targets {
 	var targets endpoint.Targets
 
 	for _, lb := range status.LoadBalancer.Ingress {

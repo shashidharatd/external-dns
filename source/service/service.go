@@ -25,10 +25,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 
@@ -45,7 +45,7 @@ const (
 // matched services' entrypoints it will return a corresponding
 // Endpoint object.
 type serviceSource struct {
-	client           kubernetes.Interface
+	client           corev1client.CoreV1Interface
 	namespace        string
 	annotationFilter string
 	// process Services with legacy annotations
@@ -56,7 +56,7 @@ type serviceSource struct {
 }
 
 // NewSource creates a new serviceSource with the given config.
-func NewSource(kubeClient kubernetes.Interface, namespace, annotationFilter string, fqdnTemplate string, combineFqdnAnnotation bool, compatibility string, publishInternal bool) (*serviceSource, error) {
+func NewSource(client corev1client.CoreV1Interface, namespace, annotationFilter string, fqdnTemplate string, combineFqdnAnnotation bool, compatibility string, publishInternal bool) (*serviceSource, error) {
 	var (
 		tmpl *template.Template
 		err  error
@@ -71,7 +71,7 @@ func NewSource(kubeClient kubernetes.Interface, namespace, annotationFilter stri
 	}
 
 	return &serviceSource{
-		client:                kubeClient,
+		client:                client,
 		namespace:             namespace,
 		annotationFilter:      annotationFilter,
 		compatibility:         compatibility,
@@ -83,7 +83,7 @@ func NewSource(kubeClient kubernetes.Interface, namespace, annotationFilter stri
 
 // Endpoints returns endpoint objects for each service that should be processed.
 func (sc *serviceSource) Endpoints() ([]*endpoint.Endpoint, error) {
-	services, err := sc.client.CoreV1().Services(sc.namespace).List(metav1.ListOptions{})
+	services, err := sc.client.Services(sc.namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -141,11 +141,11 @@ func (sc *serviceSource) Endpoints() ([]*endpoint.Endpoint, error) {
 	return endpoints, nil
 }
 
-func (sc *serviceSource) extractHeadlessEndpoints(svc *v1.Service, hostname string) []*endpoint.Endpoint {
+func (sc *serviceSource) extractHeadlessEndpoints(svc *corev1.Service, hostname string) []*endpoint.Endpoint {
 
 	var endpoints []*endpoint.Endpoint
 
-	pods, err := sc.client.CoreV1().Pods(svc.Namespace).List(metav1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).AsSelectorPreValidated().String()})
+	pods, err := sc.client.Pods(svc.Namespace).List(metav1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).AsSelectorPreValidated().String()})
 
 	if err != nil {
 		log.Errorf("List Pods of service[%s] error:%v", svc.GetName(), err)
@@ -160,7 +160,7 @@ func (sc *serviceSource) extractHeadlessEndpoints(svc *v1.Service, hostname stri
 
 		log.Debugf("Generating matching endpoint %s with PodIP %s", headlessDomain, v.Status.PodIP)
 		// To reduce traffice on the DNS API only add record for running Pods. Good Idea?
-		if v.Status.Phase == v1.PodRunning {
+		if v.Status.Phase == corev1.PodRunning {
 			endpoints = append(endpoints, endpoint.NewEndpoint(headlessDomain, endpoint.RecordTypeA, v.Status.PodIP))
 		} else {
 			log.Debugf("Pod %s is not in running phase", v.Spec.Hostname)
@@ -169,7 +169,7 @@ func (sc *serviceSource) extractHeadlessEndpoints(svc *v1.Service, hostname stri
 
 	return endpoints
 }
-func (sc *serviceSource) endpointsFromTemplate(svc *v1.Service) ([]*endpoint.Endpoint, error) {
+func (sc *serviceSource) endpointsFromTemplate(svc *corev1.Service) ([]*endpoint.Endpoint, error) {
 	var endpoints []*endpoint.Endpoint
 
 	// Process the whole template string
@@ -188,7 +188,7 @@ func (sc *serviceSource) endpointsFromTemplate(svc *v1.Service) ([]*endpoint.End
 }
 
 // endpointsFromService extracts the endpoints from a service object
-func (sc *serviceSource) endpoints(svc *v1.Service) []*endpoint.Endpoint {
+func (sc *serviceSource) endpoints(svc *corev1.Service) []*endpoint.Endpoint {
 	var endpoints []*endpoint.Endpoint
 
 	// Get the desired hostname of the service from the annotation.
@@ -206,7 +206,7 @@ func (sc *serviceSource) endpoints(svc *v1.Service) []*endpoint.Endpoint {
 }
 
 // filterByAnnotations filters a list of services by a given annotation selector.
-func (sc *serviceSource) filterByAnnotations(services []v1.Service) ([]v1.Service, error) {
+func (sc *serviceSource) filterByAnnotations(services []corev1.Service) ([]corev1.Service, error) {
 	labelSelector, err := metav1.ParseToLabelSelector(sc.annotationFilter)
 	if err != nil {
 		return nil, err
@@ -221,7 +221,7 @@ func (sc *serviceSource) filterByAnnotations(services []v1.Service) ([]v1.Servic
 		return services, nil
 	}
 
-	filteredList := []v1.Service{}
+	filteredList := []corev1.Service{}
 
 	for _, service := range services {
 		// convert the service's annotations to an equivalent label selector
@@ -236,13 +236,13 @@ func (sc *serviceSource) filterByAnnotations(services []v1.Service) ([]v1.Servic
 	return filteredList, nil
 }
 
-func (sc *serviceSource) setResourceLabel(service v1.Service, endpoints []*endpoint.Endpoint) {
+func (sc *serviceSource) setResourceLabel(service corev1.Service, endpoints []*endpoint.Endpoint) {
 	for _, ep := range endpoints {
 		ep.Labels[endpoint.ResourceLabelKey] = fmt.Sprintf("service/%s/%s", service.Namespace, service.Name)
 	}
 }
 
-func (sc *serviceSource) generateEndpoints(svc *v1.Service, hostname string) []*endpoint.Endpoint {
+func (sc *serviceSource) generateEndpoints(svc *corev1.Service, hostname string) []*endpoint.Endpoint {
 	hostname = strings.TrimSuffix(hostname, ".")
 	ttl, err := GetTTLFromAnnotations(svc.Annotations)
 	if err != nil {
@@ -269,13 +269,13 @@ func (sc *serviceSource) generateEndpoints(svc *v1.Service, hostname string) []*
 	var targets endpoint.Targets
 
 	switch svc.Spec.Type {
-	case v1.ServiceTypeLoadBalancer:
+	case corev1.ServiceTypeLoadBalancer:
 		targets = append(targets, extractLoadBalancerTargets(svc)...)
-	case v1.ServiceTypeClusterIP:
+	case corev1.ServiceTypeClusterIP:
 		if sc.publishInternal {
 			targets = append(targets, extractServiceIps(svc)...)
 		}
-		if svc.Spec.ClusterIP == v1.ClusterIPNone {
+		if svc.Spec.ClusterIP == corev1.ClusterIPNone {
 			endpoints = append(endpoints, sc.extractHeadlessEndpoints(svc, hostname)...)
 		}
 
@@ -299,15 +299,15 @@ func (sc *serviceSource) generateEndpoints(svc *v1.Service, hostname string) []*
 	return endpoints
 }
 
-func extractServiceIps(svc *v1.Service) endpoint.Targets {
-	if svc.Spec.ClusterIP == v1.ClusterIPNone {
+func extractServiceIps(svc *corev1.Service) endpoint.Targets {
+	if svc.Spec.ClusterIP == corev1.ClusterIPNone {
 		log.Debugf("Unable to associate %s headless service with a Cluster IP", svc.Name)
 		return endpoint.Targets{}
 	}
 	return endpoint.Targets{svc.Spec.ClusterIP}
 }
 
-func extractLoadBalancerTargets(svc *v1.Service) endpoint.Targets {
+func extractLoadBalancerTargets(svc *corev1.Service) endpoint.Targets {
 	var targets endpoint.Targets
 
 	// Create a corresponding endpoint for each configured external entrypoint.

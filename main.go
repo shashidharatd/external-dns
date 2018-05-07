@@ -226,13 +226,13 @@ func BuildWithConfig(source string, p clientgenerator.ClientGenerator, cfg *sour
 		if err != nil {
 			return nil, err
 		}
-		s, err = service.NewSource(client, cfg.Namespace, cfg.AnnotationFilter, cfg.FQDNTemplate, cfg.CombineFQDNAndAnnotation, cfg.Compatibility, cfg.PublishInternal)
+		s, err = service.NewSource(client.CoreV1(), cfg.Namespace, cfg.AnnotationFilter, cfg.FQDNTemplate, cfg.CombineFQDNAndAnnotation, cfg.Compatibility, cfg.PublishInternal)
 	case "ingress":
 		client, err := p.KubeClient()
 		if err != nil {
 			return nil, err
 		}
-		s, err = ingress.NewSource(client, cfg.Namespace, cfg.AnnotationFilter, cfg.FQDNTemplate, cfg.CombineFQDNAndAnnotation)
+		s, err = ingress.NewSource(client.ExtensionsV1beta1(), cfg.Namespace, cfg.AnnotationFilter, cfg.FQDNTemplate, cfg.CombineFQDNAndAnnotation)
 	case "fake":
 		s, err = fake.NewSource(cfg.FQDNTemplate)
 	default:

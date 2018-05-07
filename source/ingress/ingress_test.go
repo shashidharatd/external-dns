@@ -19,10 +19,10 @@ package ingress
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	extensionv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/kubernetes-incubator/external-dns/endpoint"
 
@@ -39,7 +39,7 @@ var _ Source = &ingressSource{}
 type IngressSuite struct {
 	suite.Suite
 	sc             Source
-	fooWithTargets *v1beta1.Ingress
+	fooWithTargets *extensionv1beta1.Ingress
 }
 
 func (suite *IngressSuite) SetupTest() {
@@ -47,7 +47,7 @@ func (suite *IngressSuite) SetupTest() {
 	var err error
 
 	suite.sc, err = NewSource(
-		fakeClient,
+		fakeClient.ExtensionsV1beta1(),
 		"",
 		"",
 		"{{.Name}}",
@@ -60,7 +60,7 @@ func (suite *IngressSuite) SetupTest() {
 		namespace: "default",
 		dnsnames:  []string{"foo"},
 		ips:       []string{"8.8.8.8"},
-		hostnames: []string{"v1"},
+		hostnames: []string{"corev1"},
 	}).Ingress()
 	_, err = fakeClient.Extensions().Ingresses(suite.fooWithTargets.Namespace).Create(suite.fooWithTargets)
 	suite.NoError(err, "should succeed")
@@ -120,7 +120,7 @@ func TestNewIngressSource(t *testing.T) {
 	} {
 		t.Run(ti.title, func(t *testing.T) {
 			_, err := NewSource(
-				fake.NewSimpleClientset(),
+				fake.NewSimpleClientset().ExtensionsV1beta1(),
 				"",
 				ti.annotationFilter,
 				ti.fqdnTemplate,
@@ -710,14 +710,14 @@ func testIngressEndpoints(t *testing.T) {
 		},
 	} {
 		t.Run(ti.title, func(t *testing.T) {
-			ingresses := make([]*v1beta1.Ingress, 0)
+			ingresses := make([]*extensionv1beta1.Ingress, 0)
 			for _, item := range ti.ingressItems {
 				ingresses = append(ingresses, item.Ingress())
 			}
 
 			fakeClient := fake.NewSimpleClientset()
 			ingressSource, _ := NewSource(
-				fakeClient,
+				fakeClient.ExtensionsV1beta1(),
 				ti.targetNamespace,
 				ti.annotationFilter,
 				ti.fqdnTemplate,
@@ -750,34 +750,34 @@ type fakeIngress struct {
 	annotations map[string]string
 }
 
-func (ing fakeIngress) Ingress() *v1beta1.Ingress {
-	ingress := &v1beta1.Ingress{
+func (ing fakeIngress) Ingress() *extensionv1beta1.Ingress {
+	ingress := &extensionv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:   ing.namespace,
 			Name:        ing.name,
 			Annotations: ing.annotations,
 		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{},
+		Spec: extensionv1beta1.IngressSpec{
+			Rules: []extensionv1beta1.IngressRule{},
 		},
-		Status: v1beta1.IngressStatus{
-			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{},
+		Status: extensionv1beta1.IngressStatus{
+			LoadBalancer: corev1.LoadBalancerStatus{
+				Ingress: []corev1.LoadBalancerIngress{},
 			},
 		},
 	}
 	for _, dnsname := range ing.dnsnames {
-		ingress.Spec.Rules = append(ingress.Spec.Rules, v1beta1.IngressRule{
+		ingress.Spec.Rules = append(ingress.Spec.Rules, extensionv1beta1.IngressRule{
 			Host: dnsname,
 		})
 	}
 	for _, ip := range ing.ips {
-		ingress.Status.LoadBalancer.Ingress = append(ingress.Status.LoadBalancer.Ingress, v1.LoadBalancerIngress{
+		ingress.Status.LoadBalancer.Ingress = append(ingress.Status.LoadBalancer.Ingress, corev1.LoadBalancerIngress{
 			IP: ip,
 		})
 	}
 	for _, hostname := range ing.hostnames {
-		ingress.Status.LoadBalancer.Ingress = append(ingress.Status.LoadBalancer.Ingress, v1.LoadBalancerIngress{
+		ingress.Status.LoadBalancer.Ingress = append(ingress.Status.LoadBalancer.Ingress, corev1.LoadBalancerIngress{
 			Hostname: hostname,
 		})
 	}
